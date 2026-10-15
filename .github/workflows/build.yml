@@ -1,4 +1,4 @@
-name: Build METRO: Yadernaya Zima
+name: Build METRO Yadernaya Zima
 on:
   push:
     branches: [ "main" ]
@@ -16,14 +16,12 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
-      - name: Make Gradle wrapper executable if present
-        run: chmod +x gradlew || true
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.8'
       - name: Build mod
-        run: |
-          if [ -f ./gradlew ]; then ./gradlew --no-daemon build
-          else gradle --no-daemon build
-          fi
+        run: gradle --no-daemon build
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
