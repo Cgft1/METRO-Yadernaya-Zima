@@ -1,0 +1,30 @@
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'maven-publish'
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+}
+group = 'ru.metro'
+version = '1.0.0'
+base { archivesName = 'metro_yadernaya_zima' }
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+minecraft {
+    mappings channel: 'official', version: '1.20.1'
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'info'
+            mods { metro_yadernaya_zima { source sourceSets.main } }
+        }
+        client { }
+        server { }
+    }
+}
+repositories { mavenCentral() }
+dependencies { minecraft 'net.minecraftforge:forge:1.20.1-47.2.0' }
+tasks.named('processResources', ProcessResources).configure {
+    var replaceProperties = [mod_id: 'metro_yadernaya_zima', mod_name: 'METRO: Ядерная зима', mod_version: project.version]
+    inputs.properties replaceProperties
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) { expand replaceProperties }
+}
