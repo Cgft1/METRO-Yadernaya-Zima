@@ -2,10 +2,12 @@ package ru.metro.yadernaya_zima;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.TickEvent;
@@ -31,7 +33,7 @@ public class MetroMod {
     public static final RegistryObject<Item> MEDKIT = ITEMS.register("medkit",
         () -> new Item(new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> GAS_MASK = ITEMS.register("gas_mask",
-        () -> new Item(new Item.Properties().stacksTo(1)));
+        () -> new GasMaskItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> SCRAP = ITEMS.register("scrap_metal",
         () -> new Item(new Item.Properties()));
 
@@ -67,7 +69,24 @@ public class MetroMod {
     public void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide) return;
         Player player = event.player;
-        if (player.level().dimension() == Level.OVERWORLD && player.getY() > 62 && !hasGasMask(player)) {
+        boolean inRadiation = player.level().dimension() == Level.OVERWORLD && player.getY() > 62;
+        boolean maskEquipped = player.getItemBySlot(EquipmentSlot.HEAD).is(GAS_MASK.get());
+        boolean hasFilter = hasFilter(player);
+
+        if (inRadiation && maskEquipped && hasFilter) {
+            int filterTimer = player.getPersistentData().getInt("metro_filter_ticks") + 1;
+            if (filterTimer >= 6000) {
+                consumeFilter(player);
+                player.getPersistentData().putInt("metro_filter_ticks", 0);
+            } else {
+                player.getPersistentData().putInt("metro_filter_ticks", filterTimer);
+            }
+            player.getPersistentData().putInt("metro_radiation_ticks", 0);
+            return;
+        }
+
+        player.getPersistentData().putInt("metro_filter_ticks", 0);
+        if (inRadiation) {
             int timer = player.getPersistentData().getInt("metro_radiation_ticks") + 1;
             if (timer >= 100) {
                 player.hurt(player.damageSources().magic(), 1.0f);
@@ -80,7 +99,28 @@ public class MetroMod {
         }
     }
 
-    private boolean hasGasMask(Player player) {
-        return player.getMainHandItem().is(GAS_MASK.get()) || player.getOffhandItem().is(GAS_MASK.get());
+    private boolean hasFilter(Player player) {
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.is(FILTER.get()) && !stack.isEmpty()) return true;
+        }
+        for (ItemStack stack : player.getInventory().offhand) {
+            if (stack.is(FILTER.get()) && !stack.isEmpty()) return true;
+        }
+        return false;
+    }
+
+    private void consumeFilter(Player player) {
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.is(FILTER.get()) && !stack.isEmpty()) {
+                stack.shrink(1);
+                return;
+            }
+        }
+        for (ItemStack stack : player.getInventory().offhand) {
+            if (stack.is(FILTER.get()) && !stack.isEmpty()) {
+                stack.shrink(1);
+                return;
+            }
+        }
     }
 }
