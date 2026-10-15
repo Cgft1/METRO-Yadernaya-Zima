@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "metro_yadernaya_zima:item/gas_mask"
+  }
+}
