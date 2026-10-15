@@ -1,0 +1,32 @@
+name: Build METRO: Yadernaya Zima
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Make Gradle wrapper executable if present
+        run: chmod +x gradlew || true
+      - name: Build mod
+        run: |
+          if [ -f ./gradlew ]; then ./gradlew --no-daemon build
+          else gradle --no-daemon build
+          fi
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: METRO-Yadernaya-Zima-Forge-1.20.1
+          path: build/libs/*.jar
+          if-no-files-found: error
